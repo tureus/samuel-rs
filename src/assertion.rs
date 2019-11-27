@@ -132,6 +132,7 @@ pub enum Id {
         sp_name_qualifier: Option<String>,
         format: Option<String>,
         sp_provided_id: Option<String>,
+        text: Option<String>,
     },
     EncryptedId {
         encrypted_data: String,
@@ -153,6 +154,7 @@ impl<'a, 'd: 'a> TryFrom<Node<'a, 'd>> for Id {
                 sp_name_qualifier: n.attribute("SPNameQualifier").map(|a| a.into()),
                 format: n.attribute("Format").map(|a| a.into()),
                 sp_provided_id: n.attribute("SPProvidedID").map(|a| a.into()),
+                text: n.text().map(|x| x.into()),
             }),
             "EncryptedID" => Ok(Id::EncryptedId {
                 encrypted_data: try_child(n, "EncryptedData")?.text().unwrap().into(),
@@ -320,7 +322,7 @@ pub enum Advice {
 impl<'a, 'd: 'a> TryFrom<Node<'a, 'd>> for Advice {
     type Err = Error;
 
-    fn try_from(n: Node) -> Result<Self, Self::Err> {
+    fn try_from(_: Node) -> Result<Self, Self::Err> {
         unimplemented!()
     }
 }
@@ -331,7 +333,7 @@ pub struct Statement {}
 impl<'a, 'd: 'a> TryFrom<Node<'a, 'd>> for Statement {
     type Err = Error;
 
-    fn try_from(n: Node) -> Result<Self, Self::Err> {
+    fn try_from(_: Node) -> Result<Self, Self::Err> {
         unimplemented!()
     }
 }
