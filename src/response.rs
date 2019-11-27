@@ -10,7 +10,7 @@ use try_from::{TryFrom, TryInto};
 // https://docs.oasis-open.org/security/saml/v2.0/saml-schema-protocol-2.0.xsd
 // http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf
 pub struct Response {
-    pub id: String,
+    pub id: Option<String>,
     pub in_response_to: Option<String>,
     pub version: String,
     pub issue_instant: String,
@@ -27,7 +27,7 @@ impl<'a, 'd: 'a> TryFrom<Node<'a, 'd>> for Response {
 
     fn try_from(n: Node) -> Result<Self, Self::Err> {
         Ok(Response {
-            id: try_attribute(n, "ID")?.into(),
+            id: n.attribute("ID").map(|a| a.into()),
             in_response_to: n.attribute("InResponseTo").map(|a| a.into()),
             version: try_attribute(n, "Version")?.into(),
             issue_instant: try_attribute(n, "IssueInstant")?.into(),
@@ -67,16 +67,36 @@ impl<'a, 'd: 'a> TryFrom<Node<'a, 'd>> for Status {
     type Err = Error;
 
     fn try_from(n: Node) -> Result<Self, Self::Err> {
+        let some_node = n
+            .children()
+            .find(|c| c.tag_name().name() == "StatusMessage");
+        let message = if let Some(node) = some_node {
+            if let Some(t) = node.text() {
+                Some(t.to_string())
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        let some_node = n
+            .children()
+            .find(|c| c.tag_name().name() == "StatusDetail");
+        let detail = if let Some(node) = some_node {
+            if let Some(t) = node.text() {
+                Some(t.to_string())
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         Ok(Status {
             code: try_child(n, "StatusCode")?.try_into()?,
-            message: n
-                .children()
-                .find(|c| c.tag_name().name() == "StatusMessage")
-                .map(|c| c.text().unwrap().into()),
-            detail: n
-                .children()
-                .find(|c| c.tag_name().name() == "StatusDetail")
-                .map(|c| c.text().unwrap().into()),
+            message,
+            detail
         })
     }
 }
